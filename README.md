@@ -93,18 +93,20 @@ curl -N http://127.0.0.1:8888/v1/chat/completions \
 
 | 配置项 | 值 |
 |---|---|
-| API 地址 / Base URL | `http://<部署机器IP>:8888/v1` |
+| API 地址 / Base URL | `http://127.0.0.1:8888/v1` |
 | API Key | 随便填（如 `sk-xxx`，本服务不校验） |
 | 模型名 | 随便填（如 `hybrid`，代理会强制替换成配置里的主模型名） |
 
 > 模型名填什么都能用，因为 `hybrid_proxy.py` 会忽略你传入的模型名，统一走配置里的 `deepseek_model`（视觉模型同理自动触发）。
+>
+> 地址默认填 `127.0.0.1`（本机自用）。若把服务部署在软路由/树莓派等局域网设备、供多台机器共用，再改成那台设备的内网 IP（如 `http://192.168.100.1:8888/v1`）。
 
 **以 CLI 编码代理为例**（这是本工具最典型的使用场景——给不带视觉的编码模型接看图能力）。本服务同时提供两个协议端点，两类客户端都能直接接入：
 
-- **OpenAI 兼容端点**（`/v1/chat/completions`）→ **Codex、WorkBuddy、OpenAI SDK** 及各种 Chat UI：新增一个 OpenAI 兼容的「自定义模型」，Base URL 填 `http://<部署机器IP>:8888/v1`，API Key 随便填，模型名随便填即可。
+- **OpenAI 兼容端点**（`/v1/chat/completions`）→ **Codex、WorkBuddy、OpenAI SDK** 及各种 Chat UI：新增一个 OpenAI 兼容的「自定义模型」，Base URL 填 `http://127.0.0.1:8888/v1`，API Key 随便填，模型名随便填即可。
 - **Anthropic 兼容端点**（`/v1/messages`）→ **Claude Code、OpenClaw** 等：把模型供应商指向本服务。以 Claude Code 为例，设置环境变量：
   ```bash
-  export ANTHROPIC_BASE_URL=http://<部署机器IP>:8888
+  export ANTHROPIC_BASE_URL=http://127.0.0.1:8888
   export ANTHROPIC_API_KEY=sk-xxx    # 随便填，本服务不校验
   ```
   之后选用任意模型名，发文字走透传，发图片自动走「视觉分析 → 主模型」桥接。
