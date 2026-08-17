@@ -1,0 +1,11 @@
+# 真实配置（含 API Key），严禁提交
+hybrid_proxy.json
+
+# 日志
+*.log
+/var/log/
+
+# Python
+__pycache__/
+*.pyc
+.DS_Store

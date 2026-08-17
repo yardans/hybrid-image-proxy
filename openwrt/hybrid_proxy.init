@@ -1,0 +1,25 @@
+#!/bin/sh /etc/rc.common
+# hybrid_proxy — 图片桥接中转代理（OpenWrt 自启脚本）
+#
+# 安装：cp hybrid_proxy.init /etc/init.d/hybrid_proxy && chmod +x /etc/init.d/hybrid_proxy
+# 启用：/etc/init.d/hybrid_proxy enable
+# 使用：/etc/init.d/hybrid_proxy {start|stop|restart|status}
+
+START=99
+STOP=10
+USE_PROCD=1
+
+# 按实际部署路径修改
+PROG=/root/hybrid_proxy.py
+LOGFILE=/var/log/hybrid_proxy.log
+
+start_service() {
+    # 注意：OpenWrt 的 BusyBox 没有 nohup 命令，不能写 nohup。
+    # rc.common 本身会把进程放到后台，直接后台运行即可。
+    procd_open_instance
+    procd_set_param command python3 "$PROG"
+    procd_set_param stdout 1
+    procd_set_param stderr 1
+    procd_set_param respawn 3600 5 5
+    procd_close_instance
+}
