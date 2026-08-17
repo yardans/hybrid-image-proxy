@@ -1,6 +1,6 @@
 # hybrid-image-proxy 🖼️→📝
 
-**给不支持视觉的 LLM 接上图片理解能力** 的 OpenAI 兼容中转代理（单文件、零依赖、可跑在 OpenWrt 软路由/树莓派/任何有 Python3 的机器上）。
+**给不支持视觉的 LLM 接上图片理解能力** 的兼容中转代理（单文件、零依赖、可跑在 OpenWrt 软路由/树莓派/任何有 Python3 的机器上）。同时支持 OpenAI 与 Anthropic 两种协议。
 
 ```
 无图请求  → 原样透传给主模型（支持流式 SSE）
@@ -10,11 +10,11 @@
 
 典型场景：你的主力模型不支持视觉（比如某些文本模型 / 内部网关），但你又想让它在对话里"看懂"截图、报错、UI 界面。这个代理在中间做一次桥接——图由视觉模型消化成文字，文字再交给你的主力模型。
 
-**可接入任意 OpenAI 兼容客户端**（WorkBuddy / ChatBox / LobeChat / NextChat / OpenAI SDK 等）：只需新建一个自定义模型，把 API 地址指向本服务，即可让原本"看不到图"的模型具备看图能力。详见下方 [接入客户端](#4-接入客户端新建自定义模型)。
+**可接入任意主流客户端**（WorkBuddy / Claude Code / Codex / OpenClaw 等 CLI 编码代理，或任意 OpenAI SDK / Chat UI）：只需新建一个自定义模型，把 API 地址指向本服务，即可让原本"看不到图"的模型具备看图能力。详见下方 [接入客户端](#4-接入客户端新建自定义模型)。
 
 ## ✨ 特性
 
-- **OpenAI 兼容**：`POST /v1/chat/completions`，现有客户端（OpenAI SDK、curl、各种 Chat UI）零改动接入
+- **双协议支持**：同时提供 OpenAI（`/v1/chat/completions`）与 Anthropic（`/v1/messages`）两个端点，覆盖 WorkBuddy / Codex / Claude Code / OpenClaw 等主流客户端
 - **流式透传**：无图请求原样转发 SSE，首字延迟不受影响
 - **多图支持**：有图请求逐图交给视觉模型分析，每张图独立完整提取
 - **推理模型兜底**：视觉模型只输出 `content` 不输出时，自动退回 `reasoning_content`
@@ -99,7 +99,17 @@ curl -N http://127.0.0.1:8888/v1/chat/completions \
 
 > 模型名填什么都能用，因为 `hybrid_proxy.py` 会忽略你传入的模型名，统一走配置里的 `deepseek_model`（视觉模型同理自动触发）。
 
-**以 WorkBuddy / ChatBox / LobeChat / NextChat 等为例**：进入「模型供应商 / 自定义 API」设置，新增一个 OpenAI 兼容源，把 Base URL 填成 `http://<部署机器IP>:8888/v1`，API Key 随便填，模型列表里填任意名字（如 `hybrid-image`）。之后在对话里选中这个自定义模型即可——发文字走透传，发图片自动走「视觉分析 → 主模型」桥接。
+**以 CLI 编码代理为例**（这是本工具最典型的使用场景——给不带视觉的编码模型接看图能力）。本服务同时提供两个协议端点，两类客户端都能直接接入：
+
+- **OpenAI 兼容端点**（`/v1/chat/completions`）→ **Codex、WorkBuddy、OpenAI SDK** 及各种 Chat UI：新增一个 OpenAI 兼容的「自定义模型」，Base URL 填 `http://<部署机器IP>:8888/v1`，API Key 随便填，模型名随便填即可。
+- **Anthropic 兼容端点**（`/v1/messages`）→ **Claude Code、OpenClaw** 等：把模型供应商指向本服务。以 Claude Code 为例，设置环境变量：
+  ```bash
+  export ANTHROPIC_BASE_URL=http://<部署机器IP>:8888
+  export ANTHROPIC_API_KEY=sk-xxx    # 随便填，本服务不校验
+  ```
+  之后选用任意模型名，发文字走透传，发图片自动走「视觉分析 → 主模型」桥接。
+
+> 两种协议下，模型名都随便填——代理会忽略你传入的模型名，统一走配置里的 `deepseek_model`（视觉模型同理自动触发）。
 
 > 若客户端要求 HTTPS：中转服务本身只提供 HTTP。可在前面套一层反代（Nginx/Caddy）或走内网直连；局域网内直接 HTTP 即可。
 
