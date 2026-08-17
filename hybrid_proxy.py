@@ -24,7 +24,18 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib import request as urlreq
 from urllib.error import HTTPError, URLError
 
-CONFIG_PATH = os.environ.get("HYBRID_PROXY_CONFIG", "/root/hybrid_proxy.json")
+def _find_config():
+    """配置查找顺序：环境变量 > 脚本同目录 hybrid_proxy.json > /root/hybrid_proxy.json（兜底）"""
+    env = os.environ.get("HYBRID_PROXY_CONFIG")
+    if env:
+        return env
+    local = os.path.join(os.path.dirname(os.path.abspath(__file__)), "hybrid_proxy.json")
+    if os.path.exists(local):
+        return local
+    return "/root/hybrid_proxy.json"
+
+
+CONFIG_PATH = _find_config()
 LOG_PATH = os.environ.get("HYBRID_PROXY_LOG", "/var/log/hybrid_proxy.log")
 
 

@@ -51,10 +51,12 @@ vi hybrid_proxy.json
 
 ### 2. 启动
 
+配置查找顺序：**环境变量 `HYBRID_PROXY_CONFIG` > 脚本同目录的 `hybrid_proxy.json` > `/root/hybrid_proxy.json`**。把配置文件放到脚本同目录，直接运行即可：
+
 ```bash
 python3 hybrid_proxy.py
-# 配置文件默认读 /root/hybrid_proxy.json，
-# 可用环境变量覆盖：HYBRID_PROXY_CONFIG=/path/to/hybrid_proxy.json HYBRID_PROXY_LOG=/path/to/log python3 hybrid_proxy.py
+# 可选：环境变量覆盖配置/日志路径
+# HYBRID_PROXY_CONFIG=/path/to/hybrid_proxy.json HYBRID_PROXY_LOG=/path/to/log python3 hybrid_proxy.py
 ```
 
 ### 3. 调用
@@ -83,7 +85,41 @@ curl -N http://127.0.0.1:8888/v1/chat/completions \
 
 返回内容和 OpenAI 完全一致，客户端无需任何改动。
 
-## 🖥️ 部署到 OpenWrt 软路由
+## 🖥️ 跨平台部署
+
+### macOS
+
+```bash
+# 1. 安装 Python3（若未装）
+brew install python3
+
+# 2. 下载本仓库两个文件到同一目录：hybrid_proxy.py + hybrid_proxy.json.example
+#    复制 example 为 hybrid_proxy.json 并填写 Key
+
+# 3. 启动（自动读取同目录的 hybrid_proxy.json）
+python3 hybrid_proxy.py
+
+# 4. 局域网访问：http://你的Mac的IP:8888/v1/chat/completions
+```
+
+### Windows（PowerShell）
+
+```powershell
+# 1. 安装 Python3：https://www.python.org/downloads/ ，安装时勾选 "Add Python to PATH"
+# 2. 下载本仓库两个文件到同一目录：hybrid_proxy.py + hybrid_proxy.json.example
+#    复制 example 为 hybrid_proxy.json 并填写 Key（文件名必须叫 hybrid_proxy.json）
+
+# 3. 启动（自动读取同目录的 hybrid_proxy.json）
+python hybrid_proxy.py
+```
+
+> Windows 注意：
+> - 命令用 `python`（不是 `python3`）
+> - 首次运行弹防火墙提示时点「允许访问」，否则局域网其他设备连不上 8888 端口
+> - 日志默认只输出到终端；想落盘可加环境变量：`$env:HYBRID_PROXY_LOG = "$PWD\hybrid_proxy.log"`
+> - `openwrt/` 目录的脚本是软路由专用的，Windows 直接忽略
+
+### OpenWrt 软路由
 
 `openwrt/` 目录提供 procd 自启脚本：
 
